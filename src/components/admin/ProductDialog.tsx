@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Upload } from "lucide-react";
 
 interface ProductData {
   id?: string;
@@ -36,11 +37,14 @@ export const ProductDialog = ({ isOpen, onClose, onSave, product }: ProductDialo
     unit: "kg",
     price: 0,
   });
+  
+  const [imagePreview, setImagePreview] = useState<string>("/placeholder.svg");
 
   // Reset form when dialog opens or product changes
   useEffect(() => {
     if (product) {
       setFormData(product);
+      setImagePreview(product.thumbnail);
     } else {
       setFormData({
         thumbnail: "/placeholder.svg",
@@ -49,6 +53,7 @@ export const ProductDialog = ({ isOpen, onClose, onSave, product }: ProductDialo
         unit: "kg",
         price: 0,
       });
+      setImagePreview("/placeholder.svg");
     }
   }, [product, isOpen]);
 
@@ -58,6 +63,22 @@ export const ProductDialog = ({ isOpen, onClose, onSave, product }: ProductDialo
       ...formData,
       [name]: name === "qty" || name === "price" ? Number(value) : value,
     });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setFormData({
+          ...formData,
+          thumbnail: base64String,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -78,23 +99,33 @@ export const ProductDialog = ({ isOpen, onClose, onSave, product }: ProductDialo
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="thumbnail">Thumbnail</Label>
-              <div className="flex items-center gap-4">
-                <Card className="w-20 h-20 flex items-center justify-center overflow-hidden p-1">
+              <div className="flex flex-col gap-4 items-center">
+                <Card className="w-32 h-32 flex items-center justify-center overflow-hidden p-1">
                   <img
-                    src={formData.thumbnail || "/placeholder.svg"}
+                    src={imagePreview}
                     alt="Thumbnail Preview"
                     className="max-w-full max-h-full object-contain"
                   />
                 </Card>
-                <Input
-                  id="thumbnail"
-                  name="thumbnail"
-                  type="text"
-                  placeholder="URL gambar"
-                  value={formData.thumbnail}
-                  onChange={handleChange}
-                  className="flex-1"
-                />
+                <div className="w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full flex items-center gap-2"
+                    onClick={() => document.getElementById('thumbnailUpload')?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Gambar
+                  </Button>
+                  <input
+                    id="thumbnailUpload"
+                    name="thumbnailUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </div>
               </div>
             </div>
             
