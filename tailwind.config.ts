@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,21 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+                // Lilac theme colors
+                lilac: {
+                    50: '#f5f3ff',
+                    100: '#ede8ff',
+                    200: '#dcd6ff',
+                    300: '#c4b5fc',
+                    400: '#aa94f8',
+                    500: '#9b87f5',
+                    600: '#7e69ab',
+                    700: '#6e59a5',
+                    800: '#4c3d86',
+                    900: '#342b5e',
+                    950: '#1e1946',
+                },
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
