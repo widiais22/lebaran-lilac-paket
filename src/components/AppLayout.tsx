@@ -14,7 +14,7 @@ export function AppLayout({ userRole = "user" }: AppLayoutProps) {
 
   return (
     <SidebarProvider
-      defaultIsOpen={true}
+      defaultOpen={true}
       onOpenChange={setIsSidebarOpen}
     >
       <div className="min-h-screen flex w-full">
