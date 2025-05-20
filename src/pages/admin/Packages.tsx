@@ -64,14 +64,14 @@ const initialProducts = [
   },
 ];
 
-// Sample package data for demonstration
+// Sample package data for demonstration with explicit typing for paymentSystem
 const initialPackages = [
   {
     id: "1",
     thumbnail: "/placeholder.svg",
     name: "Paket Sembako Hemat",
     price: 250000,
-    paymentSystem: "harian",
+    paymentSystem: "harian" as const,
     installments: 5,
     installmentAmount: 50000,
     paymentPeriod: 10, // days between payments
@@ -85,7 +85,7 @@ const initialPackages = [
     thumbnail: "/placeholder.svg",
     name: "Paket Lebaran Lengkap",
     price: 500000,
-    paymentSystem: "periode",
+    paymentSystem: "periode" as const,
     installments: 2,
     installmentAmount: 250000,
     paymentPeriod: 30, // days between payments

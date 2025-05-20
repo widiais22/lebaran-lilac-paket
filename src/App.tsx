@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
+import React from "react";
 
 // User pages
 import Dashboard from "./pages/Dashboard";
@@ -21,38 +22,41 @@ import Users from "./pages/admin/Users";
 // Not found page
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const App = () => {
+  // Create a client inside the component to ensure proper React context
+  const queryClient = new QueryClient();
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* User routes */}
+            <Route path="/" element={<AppLayout userRole="user" />}>
+              <Route index element={<Dashboard />} />
+              <Route path="belanja" element={<Belanja />} />
+              <Route path="pembayaran" element={<Pembayaran />} />
+              <Route path="riwayat" element={<Riwayat />} />
+            </Route>
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* User routes */}
-          <Route path="/" element={<AppLayout userRole="user" />}>
-            <Route index element={<Dashboard />} />
-            <Route path="belanja" element={<Belanja />} />
-            <Route path="pembayaran" element={<Pembayaran />} />
-            <Route path="riwayat" element={<Riwayat />} />
-          </Route>
+            {/* Admin routes */}
+            <Route path="/admin" element={<AppLayout userRole="admin" />}>
+              <Route index element={<Navigate to="/admin/products" replace />} />
+              <Route path="products" element={<Products />} />
+              <Route path="packages" element={<Packages />} />
+              <Route path="termins" element={<Termins />} />
+              <Route path="users" element={<Users />} />
+            </Route>
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AppLayout userRole="admin" />}>
-            <Route index element={<Navigate to="/admin/products" replace />} />
-            <Route path="products" element={<Products />} />
-            <Route path="packages" element={<Packages />} />
-            <Route path="termins" element={<Termins />} />
-            <Route path="users" element={<Users />} />
-          </Route>
-
-          {/* 404 page */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+            {/* 404 page */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
