@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -38,6 +37,15 @@ export function AppSidebar() {
     const checkSpecialAdmin = async () => {
       if (!user) return;
       
+      // First check if the email is the special admin email
+      const isSpecialEmail = user.email === 'widiahmadibnu@gmail.com';
+      
+      if (isSpecialEmail) {
+        setIsSpecialAdmin(true);
+        return;
+      }
+      
+      // Otherwise check for admin role in the database
       try {
         const { data } = await supabase
           .from('user_roles')
@@ -45,12 +53,9 @@ export function AppSidebar() {
           .eq('user_id', user.id)
           .eq('role', 'admin');
           
-        // Check if the email is widiahmadibnu@gmail.com
-        const isWidia = user.email === 'widiahmadibnu@gmail.com';
-        
-        setIsSpecialAdmin(isWidia || (data && data.length > 0));
+        setIsSpecialAdmin(data && data.length > 0);
       } catch (error) {
-        console.error("Error checking special admin status:", error);
+        console.error("Error checking admin status:", error);
       }
     };
     

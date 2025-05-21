@@ -36,7 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const isAdmin = roles.some(role => role.role === 'admin');
+  
+  // Consider both database roles and special email
+  const isAdmin = user?.email === 'widiahmadibnu@gmail.com' || roles.some(role => role.role === 'admin');
 
   // Function to fetch user profile
   const fetchUserProfile = async (userId: string) => {

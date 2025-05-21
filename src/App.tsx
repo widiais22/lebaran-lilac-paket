@@ -31,7 +31,12 @@ import NotFound from "./pages/NotFound";
 const AppContent = () => {
   useEffect(() => {
     // Attempt to setup the special admin on app load
-    setupSpecialAdmin();
+    const initializeAdmin = async () => {
+      console.log("Setting up special admin...");
+      await setupSpecialAdmin();
+    };
+    
+    initializeAdmin();
   }, []);
 
   return (

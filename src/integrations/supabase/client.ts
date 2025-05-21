@@ -30,28 +30,36 @@ export const setupSpecialAdmin = async () => {
     
     // Look for the special email account
     if (user.email === 'widiahmadibnu@gmail.com') {
+      console.log('Special admin email detected:', user.email);
+      
       // Check if already an admin
-      const { data: existingRole } = await supabase
+      const { data: existingRole, error: roleError } = await supabase
         .from('user_roles')
         .select('id')
         .eq('user_id', user.id)
         .eq('role', 'admin')
         .single();
-        
-      if (existingRole) {
+      
+      if (roleError) {
+        console.log('No admin role found, adding one...');
+      } else if (existingRole) {
         console.log('Already an admin');
         return;
       }
       
       // Insert admin role
-      await supabase
+      const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
           user_id: user.id,
           role: 'admin'
         });
       
-      console.log('Admin role added for widiahmadibnu@gmail.com');
+      if (insertError) {
+        console.error('Error assigning admin role:', insertError);
+      } else {
+        console.log('Admin role successfully added for widiahmadibnu@gmail.com');
+      }
     }
   } catch (error) {
     console.error('Error setting up special admin:', error);

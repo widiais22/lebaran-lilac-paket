@@ -24,6 +24,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     if (isLoading) return;
 
     const isAuthenticated = !!user;
+    
+    // Use the isAdmin value from context which already checks for both role and special email
     const hasAdminAccess = isAdmin;
 
     if (requireAuth && !isAuthenticated) {
