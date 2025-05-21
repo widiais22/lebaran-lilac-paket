@@ -46,14 +46,17 @@ const Products = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
+      console.log("Fetching products...");
       const { data, error } = await supabase
         .from('products')
         .select('*');
       
       if (error) {
+        console.error("Error fetching products:", error);
         throw new Error(error.message);
       }
       
+      console.log("Products fetched:", data);
       return data as Product[];
     }
   });
@@ -61,14 +64,25 @@ const Products = () => {
   // Create product mutation
   const createProduct = useMutation({
     mutationFn: async (productData: Omit<Product, 'id'>) => {
+      console.log("Creating product:", productData);
       const { data, error } = await supabase
         .from('products')
-        .insert([productData])
-        .select()
-        .single();
+        .insert([{
+          name: productData.name,
+          thumbnail: productData.thumbnail,
+          unit: productData.unit,
+          price: productData.price,
+          qty: productData.qty
+        }])
+        .select();
       
-      if (error) throw new Error(error.message);
-      return data;
+      if (error) {
+        console.error("Error creating product:", error);
+        throw new Error(error.message);
+      }
+      
+      console.log("Product created:", data[0]);
+      return data[0];
     },
     onSuccess: () => {
       toast({
@@ -90,16 +104,21 @@ const Products = () => {
   // Update product mutation
   const updateProduct = useMutation({
     mutationFn: async (productData: Product) => {
+      console.log("Updating product:", productData);
       const { id, ...rest } = productData;
       const { data, error } = await supabase
         .from('products')
         .update(rest)
         .eq('id', id)
-        .select()
-        .single();
+        .select();
       
-      if (error) throw new Error(error.message);
-      return data;
+      if (error) {
+        console.error("Error updating product:", error);
+        throw new Error(error.message);
+      }
+      
+      console.log("Product updated:", data[0]);
+      return data[0];
     },
     onSuccess: () => {
       toast({
@@ -122,12 +141,18 @@ const Products = () => {
   // Delete product mutation
   const deleteProduct = useMutation({
     mutationFn: async (id: string) => {
+      console.log("Deleting product:", id);
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
       
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("Error deleting product:", error);
+        throw new Error(error.message);
+      }
+      
+      console.log("Product deleted successfully");
       return id;
     },
     onSuccess: (id) => {
