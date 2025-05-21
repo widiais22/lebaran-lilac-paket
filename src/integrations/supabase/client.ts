@@ -20,40 +20,39 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Helper function to set widiahmadibnu@gmail.com as admin
 export const setupSpecialAdmin = async () => {
   try {
-    // First get the user by email
-    const { data: users, error: userError } = await supabase
-      .from('auth.users')
-      .select('id')
-      .eq('email', 'widiahmadibnu@gmail.com')
-      .single();
-      
-    if (userError || !users) {
-      console.log('User not found or not logged in yet');
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log('User not authenticated yet');
       return;
     }
     
-    // Check if already an admin
-    const { data: existingRole } = await supabase
-      .from('user_roles')
-      .select('id')
-      .eq('user_id', users.id)
-      .eq('role', 'admin')
-      .single();
+    // Look for the special email account
+    if (user.email === 'widiahmadibnu@gmail.com') {
+      // Check if already an admin
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+        
+      if (existingRole) {
+        console.log('Already an admin');
+        return;
+      }
       
-    if (existingRole) {
-      console.log('Already an admin');
-      return;
+      // Insert admin role
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          role: 'admin'
+        });
+      
+      console.log('Admin role added for widiahmadibnu@gmail.com');
     }
-    
-    // Insert admin role
-    await supabase
-      .from('user_roles')
-      .insert({
-        user_id: users.id,
-        role: 'admin'
-      });
-    
-    console.log('Admin role added for widiahmadibnu@gmail.com');
   } catch (error) {
     console.error('Error setting up special admin:', error);
   }

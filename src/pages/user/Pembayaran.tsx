@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { WhatsApp } from "lucide-react";
+import { MessageSquare } from "lucide-react"; // Changed from WhatsApp to MessageSquare icon
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -272,7 +272,7 @@ const Pembayaran = () => {
                       className="w-full mt-4 gap-2"
                       onClick={openWhatsApp}
                     >
-                      <WhatsApp size={16} />
+                      <MessageSquare size={16} /> {/* Changed from WhatsApp to MessageSquare icon */}
                       Konfirmasi via WhatsApp
                     </Button>
                   )}
