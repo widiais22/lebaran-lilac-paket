@@ -1,8 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Table, 
@@ -15,54 +15,136 @@ import {
 import { Edit, Trash2, Plus, Filter, ArrowUp, ArrowDown } from "lucide-react";
 import { ProductDialog } from "@/components/admin/ProductDialog";
 import { ProductFilter } from "@/components/admin/ProductFilter";
-
-// Sample product data for demonstration
-const initialProducts = [
-  {
-    id: "1",
-    thumbnail: "/placeholder.svg",
-    name: "Beras Premium",
-    qty: 10,
-    unit: "kg",
-    price: 150000,
-  },
-  {
-    id: "2",
-    thumbnail: "/placeholder.svg",
-    name: "Minyak Goreng",
-    qty: 5,
-    unit: "liter",
-    price: 78000,
-  },
-  {
-    id: "3",
-    thumbnail: "/placeholder.svg",
-    name: "Gula Pasir",
-    qty: 5,
-    unit: "kg",
-    price: 85000,
-  },
-  {
-    id: "4",
-    thumbnail: "/placeholder.svg",
-    name: "Tepung Terigu",
-    qty: 3,
-    unit: "kg",
-    price: 45000,
-  },
-];
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type SortDirection = "asc" | "desc" | null;
 type SortField = "name" | "qty" | "price" | null;
 
+interface Product {
+  id: string;
+  thumbnail: string;
+  name: string;
+  qty: number;
+  unit: string;
+  price: number;
+}
+
 const Products = () => {
   const isMobile = useIsMobile();
-  const [products, setProducts] = useState(initialProducts);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState(null);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  // Fetch products
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      return data as Product[];
+    }
+  });
+
+  // Create product mutation
+  const createProduct = useMutation({
+    mutationFn: async (productData: Omit<Product, 'id'>) => {
+      const { data, error } = await supabase
+        .from('products')
+        .insert([productData])
+        .select()
+        .single();
+      
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Produk berhasil ditambahkan",
+        description: "Produk baru telah ditambahkan ke database."
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setIsDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal menambahkan produk",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update product mutation
+  const updateProduct = useMutation({
+    mutationFn: async (productData: Product) => {
+      const { id, ...rest } = productData;
+      const { data, error } = await supabase
+        .from('products')
+        .update(rest)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Produk berhasil diperbarui",
+        description: "Perubahan produk telah disimpan."
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setIsDialogOpen(false);
+      setCurrentProduct(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal memperbarui produk",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete product mutation
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw new Error(error.message);
+      return id;
+    },
+    onSuccess: (id) => {
+      toast({
+        title: "Produk berhasil dihapus",
+        description: "Produk telah dihapus dari database."
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Gagal menghapus produk",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
 
   // Sorting function
   const handleSort = (field: SortField) => {
@@ -97,40 +179,31 @@ const Products = () => {
   };
 
   // Handle creating a new product
-  const handleCreateProduct = (productData) => {
-    const newProduct = {
-      id: Date.now().toString(),
-      ...productData,
-    };
-    setProducts([...products, newProduct]);
-    setIsDialogOpen(false);
+  const handleCreateProduct = (productData: Omit<Product, 'id'>) => {
+    createProduct.mutate(productData);
   };
 
   // Handle editing a product
-  const handleEditProduct = (product) => {
+  const handleEditProduct = (product: Product) => {
     setCurrentProduct(product);
     setIsDialogOpen(true);
   };
 
   // Handle saving an edited product
-  const handleSaveEdit = (productData) => {
-    setProducts(products.map(p => 
-      p.id === productData.id ? { ...p, ...productData } : p
-    ));
-    setIsDialogOpen(false);
-    setCurrentProduct(null);
+  const handleSaveEdit = (productData: Product) => {
+    updateProduct.mutate(productData);
   };
 
   // Handle deleting a product
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = (id: string) => {
     if (confirm("Apakah anda yakin ingin menghapus produk ini?")) {
-      setProducts(products.filter(p => p.id !== id));
+      deleteProduct.mutate(id);
     }
   };
 
   // Handle filter apply
-  const handleFilterApply = (filteredProducts) => {
-    setProducts(filteredProducts);
+  const handleFilterApply = (filteredProducts: Product[]) => {
+    // Implementation for filtering
     setIsFilterOpen(false);
   };
 
@@ -143,7 +216,10 @@ const Products = () => {
       
       <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between">
         <Button 
-          onClick={() => setIsDialogOpen(true)} 
+          onClick={() => {
+            setCurrentProduct(null);
+            setIsDialogOpen(true);
+          }}
           className="bg-lilac-600 hover:bg-lilac-700"
         >
           <Plus className="mr-2 h-4 w-4" /> Tambah Product Baru
@@ -160,94 +236,100 @@ const Products = () => {
       
       <Card>
         <CardContent className="p-0 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Thumbnail</TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort("name")}
-                >
-                  <div className="flex items-center">
-                    Nama Product
-                    {sortField === "name" && sortDirection === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
-                    {sortField === "name" && sortDirection === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort("qty")}
-                >
-                  <div className="flex items-center">
-                    Qty
-                    {sortField === "qty" && sortDirection === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
-                    {sortField === "qty" && sortDirection === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
-                  </div>
-                </TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort("price")}
-                >
-                  <div className="flex items-center">
-                    Harga
-                    {sortField === "price" && sortDirection === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
-                    {sortField === "price" && sortDirection === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
-                  </div>
-                </TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {getSortedProducts().map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <img 
-                      src={product.thumbnail} 
-                      alt={product.name} 
-                      className="w-12 h-12 object-cover rounded-md"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.qty}</TableCell>
-                  <TableCell>{product.unit}</TableCell>
-                  <TableCell>
-                    {new Intl.NumberFormat('id-ID', {
-                      style: 'currency',
-                      currency: 'IDR',
-                      minimumFractionDigits: 0
-                    }).format(product.price)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditProduct(product)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => handleDeleteProduct(product.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {products.length === 0 && (
+          {isLoading ? (
+            <div className="p-8 flex justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lilac-600"></div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Tidak ada data product
-                  </TableCell>
+                  <TableHead>Thumbnail</TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSort("name")}
+                  >
+                    <div className="flex items-center">
+                      Nama Product
+                      {sortField === "name" && sortDirection === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
+                      {sortField === "name" && sortDirection === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSort("qty")}
+                  >
+                    <div className="flex items-center">
+                      Qty
+                      {sortField === "qty" && sortDirection === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
+                      {sortField === "qty" && sortDirection === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
+                    </div>
+                  </TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSort("price")}
+                  >
+                    <div className="flex items-center">
+                      Harga
+                      {sortField === "price" && sortDirection === "asc" && <ArrowUp className="ml-2 h-4 w-4" />}
+                      {sortField === "price" && sortDirection === "desc" && <ArrowDown className="ml-2 h-4 w-4" />}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {getSortedProducts().map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <img 
+                        src={product.thumbnail} 
+                        alt={product.name} 
+                        className="w-12 h-12 object-cover rounded-md"
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>{product.qty}</TableCell>
+                    <TableCell>{product.unit}</TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0
+                      }).format(product.price)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditProduct(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => handleDeleteProduct(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {products.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Tidak ada data product
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -264,7 +346,7 @@ const Products = () => {
       <ProductFilter
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        products={initialProducts}
+        products={products}
         onApply={handleFilterApply}
       />
     </div>

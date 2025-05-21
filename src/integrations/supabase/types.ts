@@ -9,16 +9,263 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      package_products: {
+        Row: {
+          created_at: string | null
+          id: string
+          package_id: string
+          product_id: string
+          qty: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          package_id: string
+          product_id: string
+          qty?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          package_id?: string
+          product_id?: string
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_products_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packages: {
+        Row: {
+          created_at: string | null
+          id: string
+          installment_amount: number
+          installments: number
+          name: string
+          payment_period: number
+          payment_system: Database["public"]["Enums"]["payment_system"]
+          price: number
+          thumbnail: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          installment_amount?: number
+          installments?: number
+          name: string
+          payment_period?: number
+          payment_system?: Database["public"]["Enums"]["payment_system"]
+          price?: number
+          thumbnail?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          installment_amount?: number
+          installments?: number
+          name?: string
+          payment_period?: number
+          payment_system?: Database["public"]["Enums"]["payment_system"]
+          price?: number
+          thumbnail?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          due_date: string
+          id: string
+          payment_date: string | null
+          status: string
+          updated_at: string | null
+          user_package_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          due_date: string
+          id?: string
+          payment_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_package_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          payment_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_package_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_package_id_fkey"
+            columns: ["user_package_id"]
+            isOneToOne: false
+            referencedRelation: "user_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          price: number
+          qty: number
+          thumbnail: string | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          price?: number
+          qty?: number
+          thumbnail?: string | null
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          price?: number
+          qty?: number
+          thumbnail?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_packages: {
+        Row: {
+          created_at: string | null
+          due_date: string | null
+          id: string
+          package_id: string
+          purchase_date: string | null
+          status: Database["public"]["Enums"]["package_status"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          package_id: string
+          purchase_date?: string | null
+          status?: Database["public"]["Enums"]["package_status"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          package_id?: string
+          purchase_date?: string | null
+          status?: Database["public"]["Enums"]["package_status"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      package_status: "pending" | "processing" | "paid"
+      payment_system: "harian" | "periode"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +380,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      package_status: ["pending", "processing", "paid"],
+      payment_system: ["harian", "periode"],
+    },
   },
 } as const

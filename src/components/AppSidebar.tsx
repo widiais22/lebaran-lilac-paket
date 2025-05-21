@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -13,29 +14,21 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ShoppingCart, CreditCard, History, ArrowLeft } from "lucide-react";
+import { 
+  ShoppingCart, 
+  CreditCard, 
+  History, 
+  Package2, 
+  Settings, 
+  Users, 
+  LogOut, 
+  Home,
+  UserCog
+} from "lucide-react";
 
-// Define menu items with access levels
-const menuItems = {
-  user: [
-    { title: "Belanja", path: "/belanja", icon: ShoppingCart },
-    { title: "Pembayaran", path: "/pembayaran", icon: CreditCard },
-    { title: "Riwayat", path: "/riwayat", icon: History },
-  ],
-  admin: [
-    { title: "Setup Product", path: "/admin/products", icon: ShoppingCart },
-    { title: "Setup Package", path: "/admin/packages", icon: ShoppingCart },
-    { title: "Setup Termin", path: "/admin/termins", icon: CreditCard },
-    { title: "Setup User", path: "/admin/users", icon: History },
-  ],
-};
-
-interface AppSidebarProps {
-  userRole: "user" | "admin";
-}
-
-export function AppSidebar({ userRole }: AppSidebarProps) {
+export function AppSidebar() {
   const location = useLocation();
+  const { user, isAdmin, signOut } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
   
   // Determine if we're on mobile based on screen width
@@ -56,7 +49,25 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
     };
   }, []);
 
-  const items = userRole === 'admin' ? menuItems.admin : menuItems.user;
+  // User menu items
+  const userItems = [
+    { title: "Dashboard", path: "/", icon: Home },
+    { title: "Belanja", path: "/belanja", icon: ShoppingCart },
+    { title: "Pembayaran", path: "/pembayaran", icon: CreditCard },
+    { title: "Riwayat", path: "/riwayat", icon: History },
+  ];
+
+  // Admin menu items
+  const adminItems = [
+    { title: "Setup Product", path: "/admin/products", icon: ShoppingCart },
+    { title: "Setup Package", path: "/admin/packages", icon: Package2 },
+    { title: "Setup Termin", path: "/admin/termins", icon: CreditCard },
+    { title: "Setup User", path: "/admin/users", icon: Users },
+  ];
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <Sidebar className={cn("border-r border-border", isMobile && "fixed z-50")}>
@@ -66,10 +77,10 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
       </div>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{userRole === 'admin' ? 'Admin Panel' : 'Menu'}</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {userItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location.pathname === item.path}>
                     <Link to={item.path} className="flex items-center">
@@ -82,24 +93,45 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {userRole === 'admin' && (
-          <div className="mt-auto pb-4">
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link to="/" className="flex items-center text-muted-foreground">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        <span>Kembali ke User</span>
+
+        {/* Show admin menu if user has admin role */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin Menu</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={location.pathname === item.path}>
+                      <Link to={item.path} className="flex items-center">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </div>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
+
+        <div className="mt-auto pb-4">
+          <SidebarGroup>
+            <SidebarGroupLabel>Account</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild onClick={handleLogout}>
+                    <button className="flex items-center text-muted-foreground w-full">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

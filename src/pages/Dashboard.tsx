@@ -5,42 +5,12 @@ import PackageList from "@/components/dashboard/PackageList";
 import ActionButtons from "@/components/dashboard/ActionButtons";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-// Sample data for demonstration
-const userData = {
-  name: "Ahmad Fauzi",
-  phoneNumber: "0812-3456-7890",
-  balance: 2500000,
-};
-
-const samplePackages = [
-  {
-    id: "pkg-1",
-    name: "Paket Lebaran Hemat",
-    description: "Paket sembako dengan bahan pokok untuk kebutuhan Lebaran",
-    price: 750000,
-    status: "paid" as const,
-  },
-  {
-    id: "pkg-2",
-    name: "Paket Kue Lebaran",
-    description: "Kumpulan kue-kue kering dan basah khas Lebaran",
-    price: 450000,
-    status: "processing" as const,
-    dueDate: "20 Mei 2025",
-  },
-  {
-    id: "pkg-3",
-    name: "Paket Fashion Keluarga",
-    description: "Busana Lebaran untuk keluarga (2 dewasa, 2 anak)",
-    price: 1300000,
-    status: "pending" as const,
-    dueDate: "15 Mei 2025",
-  },
-];
+import { useAuth } from "@/context/AuthContext";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Dashboard = () => {
   const isMobile = useIsMobile();
+  const { profile, isLoading } = useAuth();
   
   return (
     <div className="p-4 md:p-6">
@@ -49,15 +19,33 @@ const Dashboard = () => {
         {isMobile && <SidebarTrigger />}
       </div>
       
-      <UserInfo
-        name={userData.name}
-        phoneNumber={userData.phoneNumber}
-        balance={userData.balance}
-      />
-      
-      <PackageList packages={samplePackages} />
-      
-      <ActionButtons />
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-6 flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lilac-600"></div>
+          </CardContent>
+        </Card>
+      ) : profile ? (
+        <>
+          <UserInfo
+            name={`${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User'}
+            phoneNumber={profile.phone_number || '-'}
+            balance={profile.balance || 0}
+          />
+          
+          <PackageList packages={[]} />
+          
+          <ActionButtons />
+        </>
+      ) : (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">
+              Profil tidak ditemukan. Silakan keluar dan masuk kembali.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

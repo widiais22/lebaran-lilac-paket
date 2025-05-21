@@ -5,7 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
+import { AuthProvider } from "./context/AuthContext";
+import { AuthGuard } from "./components/AuthGuard";
 import React from "react";
+
+// Auth page
+import Auth from "./pages/Auth";
 
 // User pages
 import Dashboard from "./pages/Dashboard";
@@ -29,31 +34,40 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* User routes */}
-            <Route path="/" element={<AppLayout userRole="user" />}>
-              <Route index element={<Dashboard />} />
-              <Route path="belanja" element={<Belanja />} />
-              <Route path="pembayaran" element={<Pembayaran />} />
-              <Route path="riwayat" element={<Riwayat />} />
-            </Route>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Auth routes */}
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Main app routes with auth check */}
+              <Route element={<AuthGuard requireAuth={true} />}>
+                <Route element={<AppLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="belanja" element={<Belanja />} />
+                  <Route path="pembayaran" element={<Pembayaran />} />
+                  <Route path="riwayat" element={<Riwayat />} />
+                  
+                  {/* Admin routes with admin check */}
+                  <Route element={<AuthGuard requireAdmin={true} />}>
+                    <Route path="admin">
+                      <Route index element={<Navigate to="/admin/products" replace />} />
+                      <Route path="products" element={<Products />} />
+                      <Route path="packages" element={<Packages />} />
+                      <Route path="termins" element={<Termins />} />
+                      <Route path="users" element={<Users />} />
+                    </Route>
+                  </Route>
+                </Route>
+              </Route>
 
-            {/* Admin routes */}
-            <Route path="/admin" element={<AppLayout userRole="admin" />}>
-              <Route index element={<Navigate to="/admin/products" replace />} />
-              <Route path="products" element={<Products />} />
-              <Route path="packages" element={<Packages />} />
-              <Route path="termins" element={<Termins />} />
-              <Route path="users" element={<Users />} />
-            </Route>
-
-            {/* 404 page */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+              {/* 404 page */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
