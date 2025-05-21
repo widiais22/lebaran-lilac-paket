@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +31,31 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
+  const [isSpecialAdmin, setIsSpecialAdmin] = useState(false);
+  
+  // Check for special admin access
+  useEffect(() => {
+    const checkSpecialAdmin = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('role', 'admin');
+          
+        // Check if the email is widiahmadibnu@gmail.com
+        const isWidia = user.email === 'widiahmadibnu@gmail.com';
+        
+        setIsSpecialAdmin(isWidia || (data && data.length > 0));
+      } catch (error) {
+        console.error("Error checking special admin status:", error);
+      }
+    };
+    
+    checkSpecialAdmin();
+  }, [user]);
   
   // Determine if we're on mobile based on screen width
   useEffect(() => {
@@ -94,8 +120,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Show admin menu if user has admin role */}
-        {isAdmin && (
+        {/* Show admin menu if user has admin role or is special admin */}
+        {(isAdmin || isSpecialAdmin) && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin Menu</SidebarGroupLabel>
             <SidebarGroupContent>
